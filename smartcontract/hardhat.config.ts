@@ -1,8 +1,15 @@
 import hardhatToolboxViemPlugin from "@nomicfoundation/hardhat-toolbox-viem";
+import "@nomicfoundation/hardhat-ethers";
 import { configVariable, defineConfig } from "hardhat/config";
 
 export default defineConfig({
   plugins: [hardhatToolboxViemPlugin],
+  paths: {
+    tests: {
+      mocha: "./test",
+      nodejs: "./test", // Also support node:test if needed
+    },
+  },
   mocha: {
     timeout: 40000,
   },
