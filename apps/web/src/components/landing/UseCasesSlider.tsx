@@ -10,6 +10,7 @@ export default function UseCasesSlider() {
   return (
     <section className="py-12">
       <div className="container mx-auto px-4">
+        <h2 className="text-2xl font-bold mb-6">Who benefits</h2>
         <div className="overflow-x-auto no-scrollbar -mx-4 px-4">
           <div className="flex gap-4">
             {items.map((it) => (

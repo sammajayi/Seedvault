@@ -10,11 +10,11 @@ export default function ValueBar() {
   return (
     <section className="py-8">
       <div className="container mx-auto px-4">
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
           {features.map((f) => (
-            <div key={f.title} className="p-4 rounded-lg bg-card/60 backdrop-blur-md border border-input flex flex-col items-start gap-2">
-              <div className="text-2xl p-2 rounded bg-gradient-to-br from-primary to-accent text-primary-foreground shadow-sm">{f.icon}</div>
-              <h3 className="font-semibold">{f.title}</h3>
+            <div key={f.title} className="p-5 rounded-xl bg-card/60 backdrop-blur-sm border border-input flex flex-col items-start gap-3 hover:translate-y-0.5 transition-transform">
+              <div className="text-3xl p-3 rounded-lg bg-gradient-to-br from-primary to-accent text-primary-foreground shadow-inner">{f.icon}</div>
+              <h3 className="font-semibold text-lg">{f.title}</h3>
               <p className="text-sm text-foreground/70">{f.desc}</p>
             </div>
           ))}

@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/sheet"
 
 
-const navLinks = [
+const navLinks: { name: string; href: string; external?: boolean }[] = [
   { name: "Dashboard", href: "/dashboard" },
   { name: "AI Assistant", href: "/ai" },
   { name: "Strategy", href: "/strategy" },

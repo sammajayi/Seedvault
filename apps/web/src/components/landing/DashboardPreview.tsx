@@ -25,7 +25,7 @@ export default function DashboardPreview() {
           <div className="absolute inset-0 pointer-events-none" />
           <div className="flex flex-col md:flex-row gap-6">
             <div className="flex-1">
-              <div className="h-48 rounded-lg mb-4 bg-background/0">
+              <div className="h-48 sm:h-56 md:h-48 rounded-lg mb-4 bg-background/0">
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                     <defs>
