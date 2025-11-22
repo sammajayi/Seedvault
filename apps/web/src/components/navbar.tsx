@@ -14,9 +14,12 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet"
 
+
 const navLinks = [
-  { name: "Home", href: "/" },
-  { name: "Docs", href: "https://docs.celo.org", external: true },
+  { name: "Dashboard", href: "/dashboard" },
+  { name: "AI Assistant", href: "/ai" },
+  { name: "Strategy", href: "/strategy" },
+  { name: "Analytics", href: "/analytics" },
 ]
 
 export function Navbar() {
@@ -38,24 +41,29 @@ export function Navbar() {
               <div className="flex items-center gap-2 mb-8">
 
                 <span className="font-bold text-lg">
-                  my-celo-app
+                 Seed Vault
                 </span>
               </div>
               <nav className="flex flex-col gap-4">
-                {navLinks.map((link) => (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    target={link.external ? "_blank" : undefined}
-                    rel={link.external ? "noopener noreferrer" : undefined}
-                    className={`flex items-center gap-2 text-base font-medium transition-colors hover:text-primary ${
-                      pathname === link.href ? "text-foreground" : "text-foreground/70"
-                    }`}
-                  >
-                    {link.name}
-                    {link.external && <ExternalLink className="h-4 w-4" />}
-                  </Link>
-                ))}
+            
+
+                {/* Overview section for quick links */}
+                <div className="mt-4">
+                  <h3 className="mb-2 text-sm font-semibold">Overview</h3>
+                  <div className="flex flex-col gap-2">
+                    {navLinks.map((link) => (
+                      <Link
+                        key={link.href}
+                        href={link.href}
+                        className={`flex items-center gap-2 text-sm font-medium transition-colors hover:text-primary ${
+                          pathname === link.href ? "text-foreground" : "text-foreground/70"
+                        }`}
+                      >
+                        {link.name}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
                 <div className="mt-6 pt-6 border-t">
                     <WalletConnectButton />
                   </div>
@@ -67,13 +75,30 @@ export function Navbar() {
           <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
 
             <span className="hidden font-bold text-xl sm:inline-block">
-              my-celo-app
+              Seed Vault
             </span>
           </Link>
         </div>
         
         {/* Desktop navigation */}
         <nav className="hidden md:flex items-center gap-8">
+          {/* Desktop overview quick links */}
+          <div className="flex items-center gap-3">
+            <span className="text-sm font-semibold">Overview</span>
+            <div className="flex items-center gap-3">
+              {navLinks.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className={`flex items-center gap-1.5 text-sm font-medium transition-colors hover:text-primary ${
+                    pathname === link.href ? "text-foreground" : "text-foreground/70"
+                  }`}
+                >
+                  {link.name}
+                </Link>
+              ))}
+            </div>
+          </div>
           {navLinks.map((link) => (
             <Link
               key={link.href}
