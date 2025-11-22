@@ -49,7 +49,7 @@ export function Navbar() {
 
                 {/* Overview section for quick links */}
                 <div className="mt-4">
-                  <h3 className="mb-2 text-sm font-semibold">Overview</h3>
+                  {/* <h3 className="mb-2 text-sm font-semibold">Overview</h3> */}
                   <div className="flex flex-col gap-2">
                     {navLinks.map((link) => (
                       <Link
