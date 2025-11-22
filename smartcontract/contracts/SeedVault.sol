@@ -365,12 +365,12 @@ contract SeedVault is
             uint256 _totalWithdrawn
         )
     {
-        (uint256 aaveBalance,,,,,) = aavePool.getUserAccountData(address(this));
+        (uint256 _aaveBalance,,,,,) = aavePool.getUserAccountData(address(this));
         return (
             totalAssets(),
             totalShares,
             cUSD.balanceOf(address(this)),
-            aaveBalance, // Get total collateral from Aave
+            _aaveBalance, // Get total collateral from Aave
             totalDeposited,
             totalWithdrawn
         );

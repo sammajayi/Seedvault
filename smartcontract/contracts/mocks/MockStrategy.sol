@@ -4,9 +4,7 @@ pragma solidity ^0.8.24;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-import "../IAave.sol";
-
-contract MockStrategy is IVaultYieldStrategy {
+contract MockStrategy {
     using SafeERC20 for IERC20;
 
     IERC20 public immutable asset;
@@ -24,14 +22,14 @@ contract MockStrategy is IVaultYieldStrategy {
         vault = _vault;
     }
 
-    function deposit(uint256 amount) external override returns (uint256) {
+    function deposit(uint256 amount) external returns (uint256) {
         if (msg.sender != vault) revert NotVault();
         asset.safeTransferFrom(msg.sender, address(this), amount);
         _totalAssets += amount;
         return amount;
     }
 
-    function withdraw(uint256 amount) external override returns (uint256) {
+    function withdraw(uint256 amount) external returns (uint256) {
         if (msg.sender != vault) revert NotVault();
         if (amount > _totalAssets) revert InsufficientFunds();
         _totalAssets -= amount;
@@ -39,7 +37,7 @@ contract MockStrategy is IVaultYieldStrategy {
         return amount;
     }
 
-    function totalAssets() external view override returns (uint256) {
+    function totalAssets() external view returns (uint256) {
         return _totalAssets;
     }
 }

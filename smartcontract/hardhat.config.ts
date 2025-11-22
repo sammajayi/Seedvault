@@ -3,6 +3,9 @@ import { configVariable, defineConfig } from "hardhat/config";
 
 export default defineConfig({
   plugins: [hardhatToolboxViemPlugin],
+  mocha: {
+    timeout: 40000,
+  },
   solidity: {
     profiles: {
       default: {

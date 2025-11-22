@@ -1,6 +1,7 @@
 import { expect } from "chai";
 import hre from "hardhat";
-import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
+import helpers from "@nomicfoundation/hardhat-network-helpers";
+const { loadFixture } = helpers;
 
 const { ethers } = hre;
 

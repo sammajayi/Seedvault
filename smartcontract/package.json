@@ -13,10 +13,18 @@
   "devDependencies": {
     "@nomicfoundation/hardhat-ignition": "^3.0.5",
     "@nomicfoundation/hardhat-toolbox-viem": "^5.0.1",
+    "@types/mocha": "^10.0.10",
     "@types/node": "^22.19.1",
     "forge-std": "github:foundry-rs/forge-std#v1.9.4",
     "hardhat": "^3.0.15",
+    "mocha": "^11.7.5",
     "typescript": "~5.8.0",
     "viem": "^2.39.3"
+  },
+  "dependencies": {
+    "@nomicfoundation/hardhat-network-helpers": "^3.0.3",
+    "@openzeppelin/contracts": "^5.4.0",
+    "@selfxyz/contracts": "^1.2.3",
+    "chai": "^6.2.1"
   }
 }
