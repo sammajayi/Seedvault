@@ -1,9 +1,7 @@
-import { BrianSDK } from '@brian-ai/sdk';
-
-// Initialize Brian AI SDK
-export const brianAI = new BrianSDK({
-  apiKey: process.env.NEXT_PUBLIC_BRIAN_API_KEY || '',
-});
+// Brian AI SDK is optional - the code uses direct API calls instead
+// If you want to use the SDK, install it: pnpm add @brian-ai/sdk
+// For now, we'll export null since the SDK isn't used in the codebase
+export const brianAI: any = null;
 
 export interface TransactionIntent {
   action: 'deposit' | 'withdraw' | 'swap' | 'transfer' | 'unknown';
