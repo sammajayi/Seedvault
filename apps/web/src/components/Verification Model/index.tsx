@@ -59,33 +59,35 @@ export default function VerificationModal({ isOpen, onClose, onVerified }: Verif
       }
 
       const userAddress = getAddress(address);
-      const endpointAddress = CONTRACT_ADDRESSES.celoSepolia.vault;
+      // IMPORTANT: endpoint must be the SelfProtocolVerification contract address, not the vault
+      // The SelfProtocolVerification contract has the verifySelfProof function that Self Protocol calls
+      const endpointAddress = CONTRACT_ADDRESSES.celoSepolia.selfProtocol;
 
       if (!endpointAddress) {
-        throw new Error('Contract address not configured');
+        throw new Error('Self Protocol contract address not configured. Set NEXT_PUBLIC_SELF_PROTOCOL_ADDRESS');
       }
 
       if (!isAddress(endpointAddress)) {
-        throw new Error('Invalid contract address configuration');
+        throw new Error('Invalid Self Protocol contract address configuration');
       }
 
-      // Self Protocol docs: "If you're using a contract to verify your proofs then please sure the contract address is in lowercase."
-      const endpointLowercase = endpointAddress.toLowerCase();
+      // Use checksummed address for endpoint (Self Protocol handles address formatting internally)
+      const checksummedEndpoint = getAddress(endpointAddress);
 
       console.log('🔍 Initializing Self App with:', {
         userId: userAddress,
-        endpoint: endpointLowercase,
-        endpointType: 'staging_celo',
+        endpoint: checksummedEndpoint,
+        endpointType: 'celo-staging',
       });
 
       const app = new SelfAppBuilder({
         version: 2,
         appName: process.env.NEXT_PUBLIC_SELF_APP_NAME || 'Attestify',
         scope: process.env.NEXT_PUBLIC_SELF_SCOPE || 'attestify',
-        endpoint: endpointLowercase, // Contract address must be lowercase per Self Protocol docs
+        endpoint: checksummedEndpoint, // Use checksummed address
         logoBase64: 'https://i.postimg.cc/mrmVf9hm/self.png',
         userId: userAddress,
-        endpointType: 'staging_celo', // Per official Self Protocol docs: https://docs.self.xyz/frontend-integration/qrcode-sdk
+        endpointType: 'celo-staging', // Fixed: must be 'celo-staging' for Celo Sepolia, not 'staging_celo'
         userIdType: 'hex', // 'hex' for EVM address or 'uuid' for uuidv4
         userDefinedData: `Attestify verification for ${userAddress}`,
         disclosures: {
@@ -288,7 +290,7 @@ export default function VerificationModal({ isOpen, onClose, onVerified }: Verif
                 <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
                   <p className="text-sm text-yellow-800 font-medium mb-1">🧪 Testing Mode</p>
                   <p className="text-xs text-yellow-700">
-                    Using Self Protocol staging_celo endpoint. Contract will mark you as verified after successful verification.
+                    Using Self Protocol celo-staging endpoint. Contract will mark you as verified after successful verification.
                   </p>
                 </div>
 

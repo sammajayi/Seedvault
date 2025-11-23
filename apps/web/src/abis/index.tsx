@@ -2,7 +2,7 @@ import VaultABI from './Vault.json';
 
 // Contract addresses
 export const CONTRACT_ADDRESSES = {
-  ATTESTIFY_VAULT: "0x996137a2906206284A5EaAc5c8b13B9b1162a563" as `0x${string}`, // Fixed AttestifyVault
+  ATTESTIFY_VAULT: "0x126bAE433a06C1DA78A02715fAe35FF11f42C2Ad" as `0x${string}`, // Deployed SeedVault on Celo Sepolia
   CUSD_TOKEN: "0xdE9e4C3ce781b4bA68120d6261cbad65ce0aB00b" as `0x${string}`, // Real Celo Sepolia cUSD
 } as const;
 
