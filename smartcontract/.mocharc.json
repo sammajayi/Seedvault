@@ -1,0 +1,16 @@
+{
+  "import": [
+    "tsx/esm"
+  ],
+  "timeout": 40000,
+  "extension": [
+    "ts"
+  ],
+  "spec": [
+    "test/**/*.test.ts"
+  ],
+  "ignore": [
+    "test/**/*.node.test.ts",
+    "test/**/test-vault-on-fork.js"
+  ]
+}
