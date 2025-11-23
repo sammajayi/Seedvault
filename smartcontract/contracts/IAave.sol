@@ -56,3 +56,23 @@ interface IAToken {
     function transfer(address to, uint256 amount) external returns (bool);
     function UNDERLYING_ASSET_ADDRESS() external view returns (address);
 }
+
+/**
+ * @title ISelfVerifier
+ * @notice Interface for Self Protocol verification
+ */
+interface ISelfVerifier {
+    function isVerified(address user) external view returns (bool);
+    function getNullifier(address user) external view returns (bytes32);
+    function verifySelfProof(bytes memory proofPayload, bytes memory userContextData) external;
+}
+
+/**
+ * @title IVaultYieldStrategy
+ * @notice Minimal strategy interface consumed by the vault
+ */
+interface IVaultYieldStrategy {
+    function deposit(uint256 amount) external returns (uint256);
+    function withdraw(uint256 amount) external returns (uint256);
+    function totalAssets() external view returns (uint256);
+}

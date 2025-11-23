@@ -59,33 +59,43 @@ export default function VerificationModal({ isOpen, onClose, onVerified }: Verif
       }
 
       const userAddress = getAddress(address);
-      const endpointAddress = CONTRACT_ADDRESSES.celoSepolia.vault;
+      // IMPORTANT: endpoint must be the SelfProtocolVerification contract address, not the vault
+      // The SelfProtocolVerification contract has the verifySelfProof function that Self Protocol calls
+      const endpointAddress = CONTRACT_ADDRESSES.celoSepolia.selfProtocol;
 
       if (!endpointAddress) {
-        throw new Error('Contract address not configured');
+        throw new Error('Self Protocol contract address not configured. Set NEXT_PUBLIC_SELF_PROTOCOL_ADDRESS');
       }
 
       if (!isAddress(endpointAddress)) {
-        throw new Error('Invalid contract address configuration');
+        throw new Error('Invalid Self Protocol contract address configuration');
       }
 
-      // Self Protocol docs: "If you're using a contract to verify your proofs then please sure the contract address is in lowercase."
-      const endpointLowercase = endpointAddress.toLowerCase();
+      // Use checksummed address for endpoint (Self Protocol handles address formatting internally)
+      const checksummedEndpoint = getAddress(endpointAddress);
 
       console.log('🔍 Initializing Self App with:', {
         userId: userAddress,
-        endpoint: endpointLowercase,
-        endpointType: 'staging_celo',
+        endpoint: checksummedEndpoint,
+        endpointType: 'celo-staging',
+        scope: process.env.NEXT_PUBLIC_SELF_SCOPE || 'attestify',
+        network: 'Celo Sepolia',
+        chainId: 11142220,
       });
+      
+      // Verify endpoint address is set correctly
+      if (checksummedEndpoint.toLowerCase() !== '0x2fb9c37215410f97e0fe2906c0e940aa483decf6') {
+        console.warn('⚠️ Endpoint address does not match deployed SelfProtocolVerification contract');
+      }
 
       const app = new SelfAppBuilder({
         version: 2,
         appName: process.env.NEXT_PUBLIC_SELF_APP_NAME || 'Attestify',
         scope: process.env.NEXT_PUBLIC_SELF_SCOPE || 'attestify',
-        endpoint: endpointLowercase, // Contract address must be lowercase per Self Protocol docs
+        endpoint: checksummedEndpoint, // Use checksummed address
         logoBase64: 'https://i.postimg.cc/mrmVf9hm/self.png',
         userId: userAddress,
-        endpointType: 'staging_celo', // Per official Self Protocol docs: https://docs.self.xyz/frontend-integration/qrcode-sdk
+        endpointType: 'celo-staging', // Fixed: must be 'celo-staging' for Celo Sepolia, not 'staging_celo'
         userIdType: 'hex', // 'hex' for EVM address or 'uuid' for uuidv4
         userDefinedData: `Attestify verification for ${userAddress}`,
         disclosures: {
@@ -136,43 +146,88 @@ export default function VerificationModal({ isOpen, onClose, onVerified }: Verif
     setStep('submitting');
     
     try {
-      // Simple approach: just call contract's verifySelfProof function
-      // The contract doesn't validate the proof, just marks user as verified
+      // Extract proof data from Self Protocol response
+      // The proofData may contain proofPayload and userContextData
+      let proofPayload = '0x';
+      let userContextData = '0x';
+      
+      if (proofData && typeof proofData === 'object') {
+        const data = proofData as { proof?: string; proofPayload?: string; userContextData?: string; [key: string]: unknown };
+        proofPayload = (data.proofPayload || data.proof || '0x') as string;
+        userContextData = (data.userContextData || '0x') as string;
+      }
+      
       console.log('📤 Calling contract verifySelfProof function...');
       console.log('Contract address:', CONTRACT_ADDRESSES.celoSepolia.vault);
+      console.log('Proof payload length:', proofPayload.length);
+      console.log('User context data length:', userContextData.length);
       
       await writeContract({
         address: CONTRACT_ADDRESSES.celoSepolia.vault as `0x${string}`,
         abi: ATTESTIFY_VAULT_ABI,
         functionName: 'verifySelfProof',
-        args: ['0x', '0x'], // Empty proof and user context data - contract doesn't validate them
+        args: [proofPayload as `0x${string}`, userContextData as `0x${string}`],
       });
       
-      console.log('✅ Contract verification successful!');
+      console.log('✅ Contract verification call initiated!');
       
     } catch (error) {
       console.error('❌ Contract verification failed:', error);
-      setErrorMessage('Contract verification failed. Please try again.');
+      const errorMsg = error instanceof Error ? error.message : 'Contract verification failed';
+      setErrorMessage(`Contract verification failed: ${errorMsg.substring(0, 200)}`);
       setStep('error');
     }
   };
 
-  const handleVerificationError = (data?: { error_code?: string; reason?: string; status?: string }) => {
+  const handleVerificationError = (data?: { error_code?: string; reason?: string; status?: string; proof?: unknown }) => {
     console.error('❌ Self Protocol verification error:', data);
+    console.error('Error details:', {
+      error_code: data?.error_code,
+      reason: data?.reason,
+      status: data?.status,
+      endpoint: CONTRACT_ADDRESSES.celoSepolia.selfProtocol,
+      scope: process.env.NEXT_PUBLIC_SELF_SCOPE || 'attestify',
+    });
+    
     let errorMsg = 'Verification failed. Please try again.';
     
     if (data) {
+      // Parse the error reason which might contain JSON
       if (data.reason) {
-        errorMsg = data.reason;
+        try {
+          // Try to parse if it's a JSON string
+          const parsed = JSON.parse(data.reason);
+          if (parsed.message) {
+            errorMsg = parsed.message;
+          } else {
+            errorMsg = data.reason;
+          }
+        } catch {
+          // If not JSON, use as-is
+          errorMsg = data.reason;
+        }
       } else if (data.error_code) {
         errorMsg = `Error: ${data.error_code}`;
         if (data.status) {
           errorMsg += ` (${data.status})`;
         }
       }
+      
+      // Check if it's a proof generation failure
+      if (data.status === 'proof_generation_failed') {
+        errorMsg = 'Proof generation failed. This may be due to:\n' +
+          '1. Contract not properly deployed or verified\n' +
+          '2. Network connectivity issues\n' +
+          '3. Contract configuration mismatch\n' +
+          '4. Self Protocol service temporarily unavailable\n\n' +
+          `Endpoint: ${CONTRACT_ADDRESSES.celoSepolia.selfProtocol}\n` +
+          `Scope: ${process.env.NEXT_PUBLIC_SELF_SCOPE || 'attestify'}`;
+      } else if (data.reason?.includes('execution reverted')) {
+        errorMsg = 'Contract execution reverted. The contract may not be properly configured or the proof validation is failing.';
+      }
     }
     
-    setErrorMessage(errorMsg);
+    setErrorMessage(errorMsg.substring(0, 400)); // Limit error message length
     setStep('error');
   };
 
