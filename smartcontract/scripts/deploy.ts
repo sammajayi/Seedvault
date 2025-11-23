@@ -94,19 +94,44 @@ async function main() {
   console.log("Account balance:", ethers.formatEther(balance), "CELO\n");
 
   // Contract addresses on Celo Sepolia
-  const SELF_PROTOCOL = "0x16ECBA51e18a4a7e61fdC417f0d47AFEeDfbed74";
+  // IdentityVerificationHub address from Self Protocol docs:
+  // https://docs.self.xyz/contract-integration/deployed-contracts
+  const IDENTITY_VERIFICATION_HUB = "0x16ECBA51e18a4a7e61fdC417f0d47AFEeDfbed74";
   const CUSD_ADDRESS = "0xdE9e4C3ce781b4bA68120d6261cbad65ce0aB00b";
   const ACUSD_ADDRESS = "0xBba98352628B0B0c4b40583F593fFCb630935a45";
   const AAVE_POOL = "0x3E59A31363E2ad014dcbc521c4a0d5757d9f3402";
 
+  // Scope seed must match frontend scope (from NEXT_PUBLIC_SELF_SCOPE env var)
+  const SCOPE_SEED = process.env.SELF_SCOPE_SEED || "attestify";
+
   console.log("📝 Using Celo Sepolia Contracts:");
-  console.log("  Self Protocol:", SELF_PROTOCOL);
+  console.log("  IdentityVerificationHub:", IDENTITY_VERIFICATION_HUB);
+  console.log("  Scope Seed:", SCOPE_SEED);
   console.log("  cUSD:", CUSD_ADDRESS);
   console.log("  acUSD (Aave):", ACUSD_ADDRESS);
   console.log("  Aave Pool:", AAVE_POOL);
 
-  // Deploy SeedVault
-  console.log("\n📝 Deploying SeedVault...");
+  // Step 1: Deploy SelfProtocolVerification contract
+  console.log("\n📝 Step 1: Deploying SelfProtocolVerification...");
+  
+  const SelfProtocolArtifact = await hre.artifacts.readArtifact("SelfProtocolVerification");
+  const SelfProtocolFactory = new ethers.ContractFactory(
+    SelfProtocolArtifact.abi,
+    SelfProtocolArtifact.bytecode,
+    deployer
+  );
+  
+  const selfProtocol = await SelfProtocolFactory.deploy(
+    IDENTITY_VERIFICATION_HUB,
+    SCOPE_SEED
+  );
+  
+  await selfProtocol.waitForDeployment();
+  const selfProtocolAddress = await selfProtocol.getAddress();
+  console.log("✅ SelfProtocolVerification deployed to:", selfProtocolAddress);
+
+  // Step 2: Deploy SeedVault
+  console.log("\n📝 Step 2: Deploying SeedVault...");
   
   // Read contract artifact
   const contractArtifact = await hre.artifacts.readArtifact("SeedVault");
@@ -118,12 +143,12 @@ async function main() {
     deployer
   );
   
-  // Deploy the contract
+  // Deploy the contract with the deployed SelfProtocolVerification address
   const vault = await SeedVaultFactory.deploy(
     CUSD_ADDRESS,
     ACUSD_ADDRESS,
     AAVE_POOL,
-    SELF_PROTOCOL
+    selfProtocolAddress  // Use deployed SelfProtocolVerification address, not hub address
   );
 
   await vault.waitForDeployment();
@@ -141,10 +166,12 @@ async function main() {
     network: "Celo Sepolia",
     chainId: Number(networkInfo.chainId),
     vault: vaultAddress,
+    selfProtocolVerification: selfProtocolAddress,
+    identityVerificationHub: IDENTITY_VERIFICATION_HUB,
+    scopeSeed: SCOPE_SEED,
     cUSD: CUSD_ADDRESS,
     acUSD: ACUSD_ADDRESS,
     aavePool: AAVE_POOL,
-    selfProtocol: SELF_PROTOCOL,
     deployer: deployer.address,
   };
 
@@ -153,11 +180,14 @@ async function main() {
   console.log(JSON.stringify(deploymentSummary, null, 2));
   console.log("============================================================\n");
 
-  console.log("🎉 Deployment complete! Update your frontend with the new contract address.");
+  console.log("🎉 Deployment complete! Update your frontend with the new contract addresses.");
   console.log("\n📋 Next steps:");
-  console.log("  1. Verify the contract on CeloScan");
-  console.log("  2. Update your frontend with the vault address:", vaultAddress);
-  console.log("  3. Test the deployment with a small deposit");
+  console.log("  1. Verify both contracts on CeloScan");
+  console.log("  2. Update your frontend with:");
+  console.log("     - Vault address:", vaultAddress);
+  console.log("     - SelfProtocolVerification address:", selfProtocolAddress);
+  console.log("  3. Ensure NEXT_PUBLIC_SELF_SCOPE matches scopeSeed:", SCOPE_SEED);
+  console.log("  4. Test the deployment with a small deposit");
 }
 
 main().then(() => process.exit(0)).catch((error) => {
