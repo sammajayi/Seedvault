@@ -1,6 +1,6 @@
 "use client";
 import { useMiniApp } from "@/contexts/miniapp-context"
-import { sdk } from "@farcaster/frame-sdk"
+import { sdk } from "@farcaster/miniapp-sdk"
 import { useState, useEffect } from "react"
 import { useAccount, useConnect } from "wagmi"
 
