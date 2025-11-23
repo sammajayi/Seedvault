@@ -31,7 +31,6 @@ import FrameWalletProvider from "./frame-wallet-context";
 interface MiniAppContextType {
   isMiniAppReady: boolean;
   context: FrameContext | null;
-  setMiniAppReady: () => void;
   addMiniApp: () => Promise<AddFrameResult | null>;
 }
 
@@ -176,7 +175,6 @@ export function MiniAppProvider({ children, addMiniAppOnLoad }: MiniAppProviderP
     <MiniAppContext.Provider
       value={{
         isMiniAppReady,
-        setMiniAppReady,
         addMiniApp: handleAddMiniApp,
         context,
       }}
