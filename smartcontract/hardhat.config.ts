@@ -7,11 +7,15 @@ export default defineConfig({
   paths: {
     tests: {
       mocha: "./test",
-      nodejs: "./test", // Also support node:test if needed
+      // node:test is disabled by pointing to non-existent directory
+      // Use 'npm test' to run Mocha tests directly
+      nodejs: "./test/.nodejs-disabled",
     },
   },
   mocha: {
     timeout: 40000,
+    spec: ["test/**/*.test.ts"],
+    ignore: ["test/**/*.node.test.ts", "test/**/test-vault-on-fork.js"],
   },
   solidity: {
     profiles: {
@@ -43,6 +47,13 @@ export default defineConfig({
       chainType: "l1",
       url: configVariable("SEPOLIA_RPC_URL"),
       accounts: [configVariable("SEPOLIA_PRIVATE_KEY")],
+    },
+    celoSepolia: {
+      type: "http",
+      chainType: "l1",
+      url: configVariable("CELO_SEPOLIA_RPC_URL") || "https://alfajores-forno.celo-testnet.org",
+      accounts: [configVariable("CELO_SEPOLIA_PRIVATE_KEY")],
+      chainId: 44787,
     },
   },
 });

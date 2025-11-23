@@ -1,7 +1,16 @@
 {
-  "loader": "tsx/esm",
+  "import": [
+    "tsx/esm"
+  ],
   "timeout": 40000,
-  "extension": ["ts"],
-  "spec": ["test/**/*.test.ts"],
-  "node-option": ["experimental-specifier-resolution=node", "loader=tsx"]
+  "extension": [
+    "ts"
+  ],
+  "spec": [
+    "test/**/*.test.ts"
+  ],
+  "ignore": [
+    "test/**/*.node.test.ts",
+    "test/**/test-vault-on-fork.js"
+  ]
 }

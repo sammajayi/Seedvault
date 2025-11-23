@@ -1,13 +1,13 @@
 import { expect } from "chai";
 import hre from "hardhat";
-import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
+import { loadFixture } from "./helpers/loadFixture.js";
 
 const { ethers } = hre;
 
 describe("MockAToken", function () {
   async function deployMockATokenFixture() {
     const [owner, user1, pool] = await ethers.getSigners();
-    
+
     // Deploy MockAToken
     const MockAToken = await ethers.getContractFactory("MockAToken");
     const mockAToken = await MockAToken.deploy(
@@ -16,7 +16,7 @@ describe("MockAToken", function () {
       "Mock Aave Celo USD",
       "maCUSD"
     );
-    
+
     return { mockAToken, owner, user1, pool };
   }
 
@@ -41,12 +41,12 @@ describe("MockAToken", function () {
   describe("Mint Function", function () {
     it("Should allow pool to mint tokens", async function () {
       const { mockAToken, user1, pool } = await loadFixture(deployMockATokenFixture);
-      
+
       const mintAmount = ethers.parseEther("100");
-      
+
       // Pool mints tokens to user1
       await mockAToken.connect(pool).mint(user1.address, mintAmount);
-      
+
       // Check user balance
       const userBalance = await mockAToken.balanceOf(user1.address);
       expect(userBalance).to.equal(mintAmount);
@@ -54,9 +54,9 @@ describe("MockAToken", function () {
 
     it("Should reject non-pool minting", async function () {
       const { mockAToken, user1 } = await loadFixture(deployMockATokenFixture);
-      
+
       const mintAmount = ethers.parseEther("100");
-      
+
       await expect(
         mockAToken.connect(user1).mint(user1.address, mintAmount)
       ).to.be.revertedWith("Only pool can mint aTokens");
@@ -66,16 +66,16 @@ describe("MockAToken", function () {
   describe("Burn Function", function () {
     it("Should allow pool to burn tokens", async function () {
       const { mockAToken, user1, pool } = await loadFixture(deployMockATokenFixture);
-      
+
       const mintAmount = ethers.parseEther("100");
       const burnAmount = ethers.parseEther("50");
-      
+
       // Setup: Pool mints tokens to user1
       await mockAToken.connect(pool).mint(user1.address, mintAmount);
-      
+
       // Pool burns tokens from user1
       await mockAToken.connect(pool).burn(user1.address, burnAmount);
-      
+
       // Check remaining balance
       const remainingBalance = await mockAToken.balanceOf(user1.address);
       expect(remainingBalance).to.equal(mintAmount - burnAmount);
@@ -83,13 +83,13 @@ describe("MockAToken", function () {
 
     it("Should reject non-pool burning", async function () {
       const { mockAToken, user1, pool } = await loadFixture(deployMockATokenFixture);
-      
+
       const mintAmount = ethers.parseEther("100");
       const burnAmount = ethers.parseEther("50");
-      
+
       // Setup: Pool mints tokens to user1
       await mockAToken.connect(pool).mint(user1.address, mintAmount);
-      
+
       // Try to burn as user1
       await expect(
         mockAToken.connect(user1).burn(user1.address, burnAmount)
