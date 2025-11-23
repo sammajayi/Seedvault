@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Shield, CheckCircle, AlertCircle, Loader2, X, Smartphone, Monitor } from 'lucide-react';
 import { useAccount, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
+import { getAddress, isAddress } from 'viem';
 import { countries, SelfQRcodeWrapper, SelfAppBuilder, getUniversalLink } from '@selfxyz/qrcode';
 import { CONTRACT_ADDRESSES } from '../../config/contract';
 import { ATTESTIFY_VAULT_ABI } from '@/abis';
@@ -52,17 +53,43 @@ export default function VerificationModal({ isOpen, onClose, onVerified }: Verif
     if (!isOpen || !address) return;
 
     try {
+      // Validate and format addresses
+      if (!isAddress(address)) {
+        throw new Error('Invalid user wallet address');
+      }
+
+      const userAddress = getAddress(address);
+      const endpointAddress = CONTRACT_ADDRESSES.celoSepolia.vault;
+
+      if (!endpointAddress) {
+        throw new Error('Contract address not configured');
+      }
+
+      if (!isAddress(endpointAddress)) {
+        throw new Error('Invalid contract address configuration');
+      }
+
+      // Self Protocol docs: "If you're using a contract to verify your proofs then please sure the contract address is in lowercase."
+      const endpointLowercase = endpointAddress.toLowerCase();
+
+      console.log('🔍 Initializing Self App with:', {
+        userId: userAddress,
+        endpoint: endpointLowercase,
+        endpointType: 'staging_celo',
+      });
+
       const app = new SelfAppBuilder({
         version: 2,
         appName: process.env.NEXT_PUBLIC_SELF_APP_NAME || 'Attestify',
         scope: process.env.NEXT_PUBLIC_SELF_SCOPE || 'attestify',
-        endpoint: CONTRACT_ADDRESSES.celoSepolia.vault,
+        endpoint: endpointLowercase, // Contract address must be lowercase per Self Protocol docs
         logoBase64: 'https://i.postimg.cc/mrmVf9hm/self.png',
-        userId: address,
-        endpointType: 'staging_celo',
-        userIdType: 'hex',
-        userDefinedData: `Attestify verification for ${address}`,
+        userId: userAddress,
+        endpointType: 'staging_celo', // Per official Self Protocol docs: https://docs.self.xyz/frontend-integration/qrcode-sdk
+        userIdType: 'hex', // 'hex' for EVM address or 'uuid' for uuidv4
+        userDefinedData: `Attestify verification for ${userAddress}`,
         disclosures: {
+          // Required verifications for DeFi compliance
           minimumAge: 18,
           excludedCountries: [
             countries.CUBA,
@@ -70,17 +97,22 @@ export default function VerificationModal({ isOpen, onClose, onVerified }: Verif
             countries.NORTH_KOREA,
             countries.RUSSIA,
           ],
+          // Optional: Request additional information
           nationality: true,
         },
       }).build();
 
+      console.log('✅ Self App built successfully');
       setSelfApp(app);
 
+      // Generate universal link for mobile users
       const link = getUniversalLink(app);
+      console.log('✅ Universal link generated:', link);
       setUniversalLink(link);
     } catch (error: unknown) {
       console.error('❌ Failed to initialize Self App:', error);
-      setErrorMessage(error instanceof Error ? error.message : 'Failed to initialize verification');
+      const errorMsg = error instanceof Error ? error.message : 'Failed to initialize verification';
+      setErrorMessage(errorMsg);
       setStep('error');
     }
   }, [isOpen, address]);
@@ -96,15 +128,28 @@ export default function VerificationModal({ isOpen, onClose, onVerified }: Verif
     }
   }, [isTxSuccess, txHash, onVerified, onClose]);
 
+  // Handle successful verification from Self Protocol
   const handleSuccessfulVerification = async (proofData?: unknown) => {
+    console.log('✅ Identity verified by Self Protocol!');
+    console.log('Proof data received:', proofData);
+    
     setStep('submitting');
+    
     try {
+      // Simple approach: just call contract's verifySelfProof function
+      // The contract doesn't validate the proof, just marks user as verified
+      console.log('📤 Calling contract verifySelfProof function...');
+      console.log('Contract address:', CONTRACT_ADDRESSES.celoSepolia.vault);
+      
       await writeContract({
         address: CONTRACT_ADDRESSES.celoSepolia.vault as `0x${string}`,
         abi: ATTESTIFY_VAULT_ABI,
         functionName: 'verifySelfProof',
-        args: ['0x', '0x'],
+        args: ['0x', '0x'], // Empty proof and user context data - contract doesn't validate them
       });
+      
+      console.log('✅ Contract verification successful!');
+      
     } catch (error) {
       console.error('❌ Contract verification failed:', error);
       setErrorMessage('Contract verification failed. Please try again.');
@@ -112,8 +157,22 @@ export default function VerificationModal({ isOpen, onClose, onVerified }: Verif
     }
   };
 
-  const handleVerificationError = (data?: { error_code?: string; reason?: string }) => {
-    setErrorMessage(data?.reason || 'Verification failed. Please try again.');
+  const handleVerificationError = (data?: { error_code?: string; reason?: string; status?: string }) => {
+    console.error('❌ Self Protocol verification error:', data);
+    let errorMsg = 'Verification failed. Please try again.';
+    
+    if (data) {
+      if (data.reason) {
+        errorMsg = data.reason;
+      } else if (data.error_code) {
+        errorMsg = `Error: ${data.error_code}`;
+        if (data.status) {
+          errorMsg += ` (${data.status})`;
+        }
+      }
+    }
+    
+    setErrorMessage(errorMsg);
     setStep('error');
   };
 

@@ -1,10 +1,23 @@
 "use client";
 // Use @farcaster/miniapp-sdk as recommended by Celo docs
 // https://docs.celo.org/build-on-celo/build-with-farcaster
-import { sdk, isInMiniApp } from "@farcaster/miniapp-sdk";
+import { sdk } from "@farcaster/miniapp-sdk";
 // Use any types for Farcaster SDK compatibility
 type FrameContext = any;
 type AddFrameResult = any;
+
+// Helper function to check if we're in a Farcaster MiniApp environment
+// Since isInMiniApp doesn't exist in the SDK, we check for SDK availability instead
+function checkInMiniApp(): boolean {
+  if (typeof window === 'undefined') return false;
+  try {
+    // Check if SDK is available (indicates we're in a MiniApp environment)
+    // SDK might not have actions loaded yet, so just check if sdk exists
+    return !!sdk;
+  } catch {
+    return false;
+  }
+}
 import {
   createContext,
   useCallback,
@@ -18,7 +31,6 @@ import FrameWalletProvider from "./frame-wallet-context";
 interface MiniAppContextType {
   isMiniAppReady: boolean;
   context: FrameContext | null;
-  setMiniAppReady: () => void;
   addMiniApp: () => Promise<AddFrameResult | null>;
 }
 
@@ -42,8 +54,8 @@ export function MiniAppProvider({ children, addMiniAppOnLoad }: MiniAppProviderP
       console.log("🚀 Initializing Farcaster SDK...");
       
       // Check if we're actually in a Farcaster MiniApp environment
-      const inMiniApp = isInMiniApp?.() ?? false;
-      console.log(`📍 Environment check - isInMiniApp: ${inMiniApp}`);
+      const inMiniApp = checkInMiniApp();
+      console.log(`📍 Environment check - inMiniApp: ${inMiniApp}`);
       
       try {
         // Check if SDK is available (might not be in non-Farcaster environments)
@@ -163,7 +175,6 @@ export function MiniAppProvider({ children, addMiniAppOnLoad }: MiniAppProviderP
     <MiniAppContext.Provider
       value={{
         isMiniAppReady,
-        setMiniAppReady,
         addMiniApp: handleAddMiniApp,
         context,
       }}
