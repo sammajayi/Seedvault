@@ -147,23 +147,36 @@ export default function VerificationModal({ isOpen, onClose, onVerified }: Verif
     setStep('submitting');
     
     try {
-      // Simple approach: just call contract's verifySelfProof function
-      // The contract doesn't validate the proof, just marks user as verified
+      // Extract proof data from Self Protocol response
+      // The proofData contains proofPayload and userContextData that need to be passed to the contract
+      // The contract validates the proof through SelfProtocolVerification.verifyUser()
+      let proofPayload = '0x';
+      let userContextData = '0x';
+      
+      if (proofData && typeof proofData === 'object') {
+        const data = proofData as { proof?: string; proofPayload?: string; userContextData?: string; [key: string]: unknown };
+        proofPayload = (data.proofPayload || data.proof || '0x') as string;
+        userContextData = (data.userContextData || '0x') as string;
+      }
+      
       console.log('📤 Calling contract verifySelfProof function...');
       console.log('Contract address:', CONTRACT_ADDRESSES.celoSepolia.vault);
+      console.log('Proof payload length:', proofPayload.length);
+      console.log('User context data length:', userContextData.length);
       
       await writeContract({
         address: CONTRACT_ADDRESSES.celoSepolia.vault as `0x${string}`,
         abi: ATTESTIFY_VAULT_ABI,
         functionName: 'verifySelfProof',
-        args: ['0x', '0x'], // Empty proof and user context data - contract doesn't validate them
+        args: [proofPayload as `0x${string}`, userContextData as `0x${string}`],
       });
       
-      console.log('✅ Contract verification successful!');
+      console.log('✅ Contract verification call initiated!');
       
     } catch (error) {
       console.error('❌ Contract verification failed:', error);
-      setErrorMessage('Contract verification failed. Please try again.');
+      const errorMsg = error instanceof Error ? error.message : 'Contract verification failed';
+      setErrorMessage(`Contract verification failed: ${errorMsg.substring(0, 200)}`);
       setStep('error');
     }
   };
